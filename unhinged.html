@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESF-2 Bingo: Unhinged Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0b0f;--hz:#ffd400;--hot:#ff3b6b;--lime:#b6ff3b;--cell:#fffbe8;--ink:#111;--muted:#a7a2b8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#f3f0ff;font-family:Inter,system-ui,sans-serif;min-height:100vh;
+    display:flex;justify-content:center;padding:0 12px 40px;
+    background-image:radial-gradient(circle at 20% 10%,rgba(255,59,107,.18),transparent 40%),radial-gradient(circle at 85% 90%,rgba(182,255,59,.12),transparent 40%)}
+  .wrap{width:100%;max-width:640px}
+  .hazard{height:14px;margin:0 -12px 18px;background:repeating-linear-gradient(-45deg,var(--hz) 0 18px,#111 18px 36px)}
+  header{text-align:center}
+  .tag{display:inline-block;font:700 11px/1 Inter;letter-spacing:.16em;text-transform:uppercase;color:#111;background:var(--hz);padding:6px 10px;transform:rotate(-1.5deg)}
+  h1{font:400 clamp(40px,10vw,68px)/.95 Bangers,sans-serif;margin:12px 0 6px;letter-spacing:.03em;color:var(--hot);
+    text-shadow:3px 3px 0 #111,5px 5px 0 var(--hz);animation:wobble 4s ease-in-out infinite}
+  @keyframes wobble{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.2deg) scale(1.02)}}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .letters,.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .letters{margin:16px 0 6px}
+  .letters span{text-align:center;font:400 clamp(30px,7vw,44px)/1 Bangers,sans-serif;color:var(--hz);text-shadow:2px 2px 0 var(--hot)}
+  .letters span:nth-child(odd){transform:rotate(-6deg)} .letters span:nth-child(even){transform:rotate(5deg)}
+  .grid{padding:8px;border:3px dashed var(--hz);border-radius:6px;background:#16141f}
+  .cell{position:relative;aspect-ratio:1;background:var(--cell);color:var(--ink);border:2px solid #111;border-radius:4px;
+    font:700 clamp(8.5px,2.25vw,12.5px)/1.15 Inter,sans-serif;padding:4px;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;text-align:center;box-shadow:3px 3px 0 #000;transition:transform .1s, background .15s;
+    -webkit-tap-highlight-color:transparent;overflow:hidden}
+  .cell:active{transform:scale(.92) rotate(0)!important}
+  .cell.marked{background:var(--hot);color:#fff}
+  .cell.marked::after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font:400 clamp(44px,12vw,72px)/1 Bangers;color:rgba(0,0,0,.28);pointer-events:none}
+  .cell.win{background:var(--lime);color:#111;animation:jitter .25s infinite}
+  @keyframes jitter{0%{translate:0 0}25%{translate:1px -1px}50%{translate:-1px 1px}75%{translate:1px 1px}}
+  .cell.free{background:#111;color:var(--hz);font:400 clamp(12px,3.2vw,18px)/1 Bangers,sans-serif;letter-spacing:.03em;cursor:default}
+  .cell.free small{display:block;font:700 clamp(7.5px,1.8vw,10px)/1.2 Inter;color:var(--muted);margin-top:3px;letter-spacing:0}
+  .cell.free.win{background:#1f3a00;color:var(--lime)}
+  .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  button.btn{font:700 14px Inter;padding:10px 16px;border-radius:4px;cursor:pointer;border:2px solid #111;background:#2a2638;color:#f3f0ff;box-shadow:3px 3px 0 #000}
+  button.btn.primary{background:var(--hz);color:#111}
+  .status{text-align:center;min-height:24px;margin-top:12px;color:var(--muted);font-size:14px}
+  .banner{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);align-items:center;justify-content:center;z-index:5;padding:20px}
+  .banner.show{display:flex}
+  .banner .box{background:var(--hz);color:#111;border:4px solid #111;box-shadow:8px 8px 0 var(--hot);padding:22px;text-align:center;max-width:360px;transform:rotate(-2deg)}
+  .banner h2{font:400 64px/1 Bangers;margin:0 0 6px;color:var(--hot);text-shadow:3px 3px 0 #111}
+  .banner p{margin:0 0 16px;font-size:14px;font-weight:700}
+  .rules{margin-top:22px;font-size:13px;color:var(--muted);line-height:1.55;border-top:2px dashed #333;padding-top:14px}
+  .rules b{color:var(--hz)}
+  .cardid{font:400 15px Bangers;letter-spacing:.1em;color:var(--muted);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hazard"></div>
+  <header>
+    <span class="tag">ESF-2 · Communications · Allegedly</span>
+    <h1>ESF-2 BINGO<br>UNHINGED EDITION</h1>
+    <p class="sub">For hour 31 of the activation, when the coffee is gone and so is the plan.</p>
+  </header>
+
+  <div class="letters"><span>H</span><span>E</span><span>L</span><span>P</span><span>!</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="cardid" id="cardid"></div>
+
+  <div class="bar">
+    <button class="btn primary" id="newCard">Deal new chaos</button>
+    <button class="btn" id="clear">Pretend none of it happened</button>
+    <button class="btn" id="copy">Copy for the AAR</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="rules">
+    <b>Rules:</b> Tap a square when it happens. Tap it again if you're in denial. Five in a row means you yell
+    <b>“SEND HELP!”</b> into the conference bridge, which will not hear you because you're still muted.
+    Not an official ODEM product. Do not include in the SCIP. (Okay, maybe as an appendix.)
+  </div>
+  <div class="hazard" style="margin-top:22px"></div>
+</div>
+
+<div class="banner" id="banner">
+  <div class="box">
+    <h2>SEND HELP!</h2>
+    <p id="winmsg">Five in a row. This is now a Type 1 incident. Please activate a second, smaller ESF-2 to manage this one.</p>
+    <button class="btn" id="keep">Return to the chaos</button>
+  </div>
+</div>
+
+<script>
+const POOL = [
+  "Radio cache is one Baofeng and a prayer",
+  "Someone proposes carrier pigeons, unironically",
+  "Repeater held together by zip ties and spite",
+  "A raccoon caused the outage",
+  "A bear is chewing on the fiber",
+  "ICS-205 written on a Waffle House napkin",
+  "The comms plan is a screenshot of a screenshot",
+  "Someone faxes the SITREP",
+  "Bridge: 300 people, 4 unmuted, 1 eating chips",
+  "Dog barks during the governor’s briefing",
+  "COW stuck in the mud",
+  "Frequency changed itself. Nobody touched it.",
+  "Ham shows up with a 40-ft tower in a Honda Civic",
+  "Encryption key is on a sticky note",
+  "The sticky note is gone",
+  "Sat call drops at “the most important part”",
+  "“It’s not a comms problem.” (It is.)",
+  "Lifeline dashboard becomes sentient",
+  "Vendor sells you a magic box",
+  "The magic box needs Wi-Fi",
+  "Starlink requested for a basement under a mountain",
+  "AUXCOMM has better gear than the state",
+  "Energy drinks outnumber staff",
+  "Spreadsheet tab named FINAL_v7_REAL_final",
+  "Duct tape listed as critical infrastructure",
+  "You hum the hold music unprompted",
+  "Briefing deck is 112 slides",
+  "Tower is owned by an LLC that is a guy named Dale",
+  "Mutual aid radios last programmed in 2009",
+  "Antenna mounted upside down, works better",
+  "Someone says “over and out”",
+  "“Copy” said 14 times in one sentence",
+  "The intern finds the real problem",
+  "Elected official asks for “the 5G one”",
+  "Helicopter flight for one AA battery",
+  "Generator fueled with the wrong fuel",
+  "“Have we tried rebooting the mountain?”",
+  "PIO posts the talkgroup name online",
+  "Map projection no one can identify",
+  "ETR is “soon” and “eventually”",
+  "Someone tries to put TAK on a toaster",
+  "You forget what day it is (it’s Tuesday) (it’s Friday)",
+  "Two agencies, one channel, zero agreement",
+  "Someone asks if the cloud is down because it’s raining",
+  "Laminated comms card is wrong, but it’s laminated",
+  "A goat wanders into the staging area",
+  "The fix is unplugging it and plugging it back in"
+];
+const WINS = [
+  "Five in a row. This is now a Type 1 incident. Please activate a second, smaller ESF-2 to manage this one.",
+  "Congratulations. Your prize is the night shift.",
+  "Five in a row. Dale has been notified.",
+  "Bingo confirmed by a raccoon. Please wait for the ETR.",
+  "You win! Please document this in an ICS-214, in triplicate."
+];
+const LINES=[];
+for(let r=0;r<5;r++)LINES.push([0,1,2,3,4].map(c=>r*5+c));
+for(let c=0;c<5;c++)LINES.push([0,1,2,3,4].map(r=>r*5+c));
+LINES.push([0,6,12,18,24],[4,8,12,16,20]);
+
+const grid=document.getElementById("grid"),statusEl=document.getElementById("status"),
+      banner=document.getElementById("banner"),cardidEl=document.getElementById("cardid");
+let state={cells:[],marked:[],tilt:[],id:"",announced:false};
+const KEY="esf2bingo-unhinged";
+function store(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.cells&&s.cells.length===25)return s}catch(e){}return null}
+
+function deal(){
+  const p=POOL.slice();
+  for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const cells=p.slice(0,24);cells.splice(12,0,"FREE");
+  const tilt=cells.map(()=>(Math.random()*5-2.5).toFixed(1));
+  const id="INCIDENT #"+Math.floor(Math.random()*9000+1000)+"-"+["OOPS","WHY","AGAIN","HELP","DALE"][Math.floor(Math.random()*5)];
+  state={cells,marked:Array(25).fill(false),tilt,id,announced:false};
+  state.marked[12]=true;store();render();
+}
+const winners=()=>LINES.filter(l=>l.every(i=>state.marked[i]));
+
+function render(){
+  grid.innerHTML="";const wins=winners(),ws=new Set(wins.flat());
+  state.cells.forEach((t,i)=>{
+    const b=document.createElement("button");b.className="cell";
+    b.style.transform=`rotate(${state.tilt[i]||0}deg)`;
+    if(i===12){b.classList.add("free");b.innerHTML="IT’S ALWAYS COMMS<small>(and also DNS)</small>";b.disabled=true}
+    else{b.textContent=t;b.onclick=()=>{state.marked[i]=!state.marked[i];store();render()}}
+    if(state.marked[i])b.classList.add("marked");
+    if(ws.has(i))b.classList.add("win");
+    b.setAttribute("aria-pressed",state.marked[i]);
+    grid.appendChild(b);
+  });
+  cardidEl.textContent=state.id;
+  const n=state.marked.filter(Boolean).length-1;
+  const moods=["Situation: nominal (suspicious)","Situation: developing","Situation: spicy","Situation: deeply spicy","Situation: call Dale"];
+  statusEl.textContent=wins.length?`${wins.length} line${wins.length>1?"s":""} complete · ${n} squares · ${moods[4]}`:`${n} of 24 marked · ${moods[Math.min(3,Math.floor(n/6))]}`;
+  if(wins.length&&!state.announced){state.announced=true;store();
+    document.getElementById("winmsg").textContent=WINS[Math.floor(Math.random()*WINS.length)];banner.classList.add("show")}
+  if(!wins.length&&state.announced){state.announced=false;store()}
+}
+document.getElementById("newCard").onclick=deal;
+document.getElementById("clear").onclick=()=>{state.marked=Array(25).fill(false);state.marked[12]=true;state.announced=false;store();render()};
+document.getElementById("keep").onclick=()=>banner.classList.remove("show");
+document.getElementById("copy").onclick=async()=>{
+  let out=`ESF-2 BINGO: UNHINGED EDITION — ${state.id}\n\n`;
+  for(let r=0;r<5;r++)out+=`Row ${r+1}: `+state.cells.slice(r*5,r*5+5).map((t,c)=>(state.marked[r*5+c]?"[X] ":"[ ] ")+t).join(" | ")+"\n";
+  try{await navigator.clipboard.writeText(out);statusEl.textContent="Copied. The AAR will never be the same."}
+  catch(e){statusEl.textContent="Copy blocked. Even the clipboard is down."}
+};
+const saved=load();if(saved){state=saved;render()}else deal();
+</script>
+</body>
+</html>

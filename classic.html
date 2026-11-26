@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESF-2 Activation Bingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1a2b; --panel:#15253b; --cell:#f4f1e8; --ink:#13202f;
+    --amber:#f2a33a; --amber-d:#c97d14; --line:#2a3f5c; --muted:#8ea3bd; --win:#3ec28f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#e8eef6;font-family:Inter,system-ui,sans-serif;
+    min-height:100vh;display:flex;justify-content:center;padding:20px 12px 40px}
+  .wrap{width:100%;max-width:640px}
+  header{text-align:center;margin-bottom:14px}
+  .tag{display:inline-block;font:600 12px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--amber);border:1px solid var(--amber-d);padding:5px 9px;border-radius:3px}
+  h1{font:800 clamp(34px,8vw,52px)/1 "Barlow Condensed",sans-serif;margin:10px 0 4px;letter-spacing:.02em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .letters,.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .letters{margin:16px 0 6px}
+  .letters span{text-align:center;font:800 clamp(24px,6vw,36px)/1 "Barlow Condensed",sans-serif;color:var(--amber)}
+  .grid{background:var(--panel);padding:6px;border-radius:8px;border:1px solid var(--line)}
+  .cell{position:relative;aspect-ratio:1;background:var(--cell);color:var(--ink);border:0;border-radius:5px;
+    font:600 clamp(9.5px,2.4vw,13.5px)/1.2 Inter,sans-serif;padding:4px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    transition:transform .08s, background .15s;-webkit-tap-highlight-color:transparent;overflow:hidden}
+  .cell:active{transform:scale(.96)}
+  .cell.marked{background:var(--amber);color:#2a1700}
+  .cell.marked::after{content:"";position:absolute;inset:14%;border:3px solid rgba(80,30,0,.35);border-radius:50%;pointer-events:none}
+  .cell.win{background:var(--win);color:#04281b}
+  .cell.win::after{border-color:rgba(0,50,30,.35)}
+  .cell.free{background:var(--ink);color:var(--amber);font:800 clamp(13px,3.4vw,19px)/1.05 "Barlow Condensed",sans-serif;cursor:default}
+  .cell.free small{display:block;font:600 clamp(8px,1.9vw,11px)/1.2 Inter,sans-serif;color:var(--muted);margin-top:3px}
+  .cell.free.win{background:#0d4d36;color:#bff5df}
+  .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  button.btn{font:600 14px Inter,sans-serif;padding:10px 16px;border-radius:6px;cursor:pointer;
+    border:1px solid var(--line);background:var(--panel);color:#e8eef6}
+  button.btn.primary{background:var(--amber);border-color:var(--amber);color:#2a1700}
+  .status{text-align:center;min-height:24px;margin-top:12px;color:var(--muted);font-size:14px}
+  .banner{display:none;position:fixed;inset:0;background:rgba(6,12,20,.78);align-items:center;justify-content:center;z-index:5;padding:20px}
+  .banner.show{display:flex}
+  .banner .box{background:var(--panel);border:2px solid var(--win);border-radius:10px;padding:24px 22px;text-align:center;max-width:360px}
+  .banner h2{font:800 54px/1 "Barlow Condensed",sans-serif;color:var(--win);margin:0 0 6px;letter-spacing:.06em}
+  .banner p{margin:0 0 16px;color:#c9d6e6;font-size:14px}
+  .rules{margin-top:22px;font-size:13px;color:var(--muted);line-height:1.5;border-top:1px solid var(--line);padding-top:14px}
+  .rules b{color:#e8eef6}
+  .cardid{font-family:"Barlow Condensed",sans-serif;letter-spacing:.08em;color:var(--muted);font-size:13px;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">Emergency Support Function #2 · Communications</span>
+    <h1>ESF-2 ACTIVATION BINGO</h1>
+    <p class="sub">Mark a square when it happens on your shift. Five in a row wins.</p>
+  </header>
+
+  <div class="letters"><span>C</span><span>O</span><span>M</span><span>M</span><span>S</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="cardid" id="cardid"></div>
+
+  <div class="bar">
+    <button class="btn primary" id="newCard">New card</button>
+    <button class="btn" id="clear">Clear marks</button>
+    <button class="btn" id="copy">Copy card as text</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="rules">
+    <b>How to play:</b> Everyone on the floor gets a different card — tap <b>New card</b> to deal one.
+    Tap a square when it actually happens (honor system, COML-certified). First full row, column, or diagonal
+    calls “COMMS!” on the bridge. The center square is free, because comms is always the problem.
+  </div>
+</div>
+
+<div class="banner" id="banner">
+  <div class="box">
+    <h2>COMMS!</h2>
+    <p>Five in a row. Announce it on the bridge — then go fix whatever just broke.</p>
+    <button class="btn primary" id="keep">Keep playing</button>
+  </div>
+</div>
+
+<script>
+const POOL = [
+  "“Can you hear me now?” on the bridge",
+  "Comms plan requested 10 min before briefing",
+  "ICS-205 changes right after printing",
+  "Generator at a site runs out of fuel",
+  "Cell site on backup power",
+  "Starlink unit deployed",
+  "COW or COLT requested",
+  "“Who owns that tower?”",
+  "Fiber cut reported",
+  "911 calls rerouted to another PSAP",
+  "Someone keys up on the wrong talkgroup",
+  "Radio cache arrives without chargers",
+  "FirstNet priority / preemption question",
+  "Amateur radio / AUXCOMM offers help",
+  "SITREP due in 15 minutes",
+  "Acronym no one can define",
+  "OR-Alert / WEA message requested",
+  "“Is the repeater up?”",
+  "FCC DIRS activated",
+  "Sat phone tried indoors",
+  "Encryption key mismatch",
+  "Duplicate frequency assignment",
+  "Vendor shows up unannounced",
+  "Utility changes the restoration ETR",
+  "Lifeline status flips to red",
+  "EOC coffee runs out",
+  "Interop patch between incompatible systems",
+  "Carrier liaison joins the call",
+  "Mountaintop site needs a helicopter",
+  "Battery shortage (AA or radio)",
+  "Muted speaker talks for 30 seconds",
+  "Hold music on a conference bridge",
+  "“Just use the cell phones”",
+  "TAK server question",
+  "Request for “more bars” at a shelter",
+  "Microwave link down",
+  "Mutual aid radios on wrong channel plan",
+  "Status spreadsheet not refreshed",
+  "Someone asks what ESF-2 does",
+  "Road closure blocks a site visit",
+  "COML trainee signs a task book",
+  "Media asks why phones aren’t working",
+  "Spare antenna found in a truck",
+  "VHF / UHF / 700 / 800 debate",
+  "Briefing runs 20 minutes over"
+];
+const LINES = [];
+for(let r=0;r<5;r++) LINES.push([0,1,2,3,4].map(c=>r*5+c));
+for(let c=0;c<5;c++) LINES.push([0,1,2,3,4].map(r=>r*5+c));
+LINES.push([0,6,12,18,24],[4,8,12,16,20]);
+
+const grid=document.getElementById("grid"), statusEl=document.getElementById("status"),
+      banner=document.getElementById("banner"), cardidEl=document.getElementById("cardid");
+let state={cells:[],marked:[],id:"",announced:false};
+
+function store(){try{localStorage.setItem("esf2bingo",JSON.stringify(state))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem("esf2bingo"));if(s&&s.cells&&s.cells.length===25)return s}catch(e){}return null}
+
+function deal(){
+  const p=POOL.slice();
+  for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const cells=p.slice(0,24); cells.splice(12,0,"FREE");
+  const id="CARD "+Math.random().toString(36).slice(2,6).toUpperCase();
+  state={cells,marked:Array(25).fill(false),id,announced:false};
+  state.marked[12]=true; store(); render();
+}
+
+function winners(){return LINES.filter(l=>l.every(i=>state.marked[i]))}
+
+function render(){
+  grid.innerHTML=""; const wins=winners(), winSet=new Set(wins.flat());
+  state.cells.forEach((t,i)=>{
+    const b=document.createElement("button"); b.className="cell";
+    if(i===12){b.classList.add("free");b.innerHTML="FREE<small>Comms is the problem</small>";b.disabled=true}
+    else{b.textContent=t; b.onclick=()=>{state.marked[i]=!state.marked[i];store();render()}}
+    if(state.marked[i]) b.classList.add("marked");
+    if(winSet.has(i)) b.classList.add("win");
+    b.setAttribute("aria-pressed",state.marked[i]);
+    grid.appendChild(b);
+  });
+  cardidEl.textContent=state.id;
+  const n=state.marked.filter(Boolean).length-1;
+  statusEl.textContent = wins.length ? `${wins.length} line${wins.length>1?"s":""} complete · ${n} squares marked` : `${n} of 24 squares marked`;
+  if(wins.length && !state.announced){state.announced=true;store();banner.classList.add("show")}
+  if(!wins.length && state.announced){state.announced=false;store()}
+}
+
+document.getElementById("newCard").onclick=deal;
+document.getElementById("clear").onclick=()=>{state.marked=Array(25).fill(false);state.marked[12]=true;state.announced=false;store();render()};
+document.getElementById("keep").onclick=()=>banner.classList.remove("show");
+document.getElementById("copy").onclick=async()=>{
+  const L="COMMS";let out=`ESF-2 ACTIVATION BINGO — ${state.id}\n\n`;
+  for(let r=0;r<5;r++){out+=`Row ${r+1}: `+state.cells.slice(r*5,r*5+5).map((t,c)=>(state.marked[r*5+c]?"[X] ":"[ ] ")+t).join(" | ")+"\n"}
+  try{await navigator.clipboard.writeText(out);statusEl.textContent="Card copied to clipboard."}
+  catch(e){statusEl.textContent="Copy not allowed here — try from the artifact's own page."}
+};
+
+const saved=load(); if(saved){state=saved;render()} else deal();
+</script>
+</body>
+</html>
